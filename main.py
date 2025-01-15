@@ -15,54 +15,54 @@ n_simulations = 100000#number of simulations for the Monte Carlo model
 #black scholes model
 def black_scholes_option(S,X,T,r,sigma,option_type="call"):
     #calculate d1 and d2 using Black Scholes formula
-    d1 = (np.log(S/X)+(r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
-    d2 = d1 - sigma * np.sqrt(T)
+    d1=(np.log(S/X)+(r+0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+    d2=d1-sigma*np.sqrt(T)
     #calculate option price based on the type
-    if option_type == "call":
-        price = S * norm.cdf(d1) - X * np.exp(-r * T) * norm.cdf(d2)#call option price
-    elif option_type == "put":
-        price = X * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)#put option price
+    if option_type=="call":
+        price=S*norm.cdf(d1)-X*np.exp(-r*T)*norm.cdf(d2)#call option price
+    elif option_type=="put":
+        price=X*np.exp(-r*T)*norm.cdf(-d2)-S*norm.cdf(-d1)#put option price
     return price
 
 #binomial option pricing model
-def binomial_tree_option(S, X, T, r, sigma, N, option_type="call", american=False):
-    dt=T / N#length of each time step
-    u=np.exp(sigma * np.sqrt(dt))#up factor
-    d=1 / u#down factor
+def binomial_tree_option(S,X,T,r,sigma,N,option_type="call",american=False):
+    dt=T/N#length of each time step
+    u=np.exp(sigma*np.sqrt(dt))#up factor
+    d=1/u#down factor
     p=(np.exp(r*dt)-d)/(u-d)#risk neutral probability
     #initialize asset prices at maturity
-    asset_prices=np.zeros(N + 1)
-    asset_prices[0]=S * d ** N#lowest price at maturity
-    for i in range(1, N + 1):
-        asset_prices[i]=asset_prices[i - 1] * u / d#populate all prices
+    asset_prices=np.zeros(N+1)
+    asset_prices[0]=S*d** N#lowest price at maturity
+    for i in range(1,N+1):
+        asset_prices[i]=asset_prices[i-1]*u/d#populate all prices
 
     #initialize option values at maturity
-    option_values=np.zeros(N + 1)
-    for i in range(N + 1):
+    option_values=np.zeros(N+1)
+    for i in range(N+1):
         if option_type=="call":
             option_values[i]=max(0,asset_prices[i]-X)#call option payoff
         elif option_type=="put":
             option_values[i]=max(0,X-asset_prices[i])#put option payoff
 
     #step backward through the tree to calculate option value at the start
-    for j in range(N - 1, -1, -1):
-        for i in range(j + 1):
-            option_values[i]=np.exp(-r*dt)*(p*option_values[i + 1]+(1 - p)*option_values[i])
+    for j in range(N-1,-1,-1):
+        for i in range(j+1):
+            option_values[i]=np.exp(-r*dt)*(p*option_values[i+1]+(1-p)*option_values[i])
             if american:#for american options consider early exercise
                 if option_type=="call":
                     option_values[i]=max(option_values[i],asset_prices[i]-X)
                 elif option_type=="put":
-                    option_values[i] = max(option_values[i],X-asset_prices[i])
+                    option_values[i]=max(option_values[i],X-asset_prices[i])
 
     return option_values[0]
 
 #monte carlo simulation for option pricing
 def monte_carlo_option(S,X,T,r,sigma,n_simulations,option_type="call"):
     np.random.seed(0)#set random seed for reproducibility
-    dt = T#single time step since we're simulating to maturity
-    discount_factor = np.exp(-r * T)#discount factor for present value calculation
+    dt=T#single time step since we're simulating to maturity
+    discount_factor=np.exp(-r*T)#discount factor for present value calculation
     #simulate stock prices at maturity using geometric Brownian motion
-    S_T = S*np.exp((r-0.5*sigma**2)*dt+sigma*np.sqrt(dt)*np.random.randn(n_simulations))
+    S_T=S*np.exp((r-0.5*sigma**2)*dt+sigma*np.sqrt(dt)*np.random.randn(n_simulations))
     
     #calculate option payoff
     if option_type=="call":
@@ -82,7 +82,7 @@ def black_scholes_greeks(S,X,T,r,sigma):
     vega=S*norm.pdf(d1)*np.sqrt(T)#sensitivity of option price to volatility
     theta=-(S*norm.pdf(d1)*sigma)/(2*np.sqrt(T))-r*X*np.exp(-r*T)*norm.cdf(d2)#time decay
     rho=X*T*np.exp(-r*T)*norm.cdf(d2)#sensitivity of option price to interest rate
-    return delta, gamma, vega, theta, rho
+    return delta,gamma,vega,theta,rho
 
 #function to display option prices and Greeks
 def display_option_pricing(S,X,T,r,sigma,N,n_simulations,option_type="call",american=False):
@@ -95,7 +95,7 @@ def display_option_pricing(S,X,T,r,sigma,N,n_simulations,option_type="call",amer
     print(f"Binomial Tree {option_type.capitalize()} Option Price: {binomial_price:.2f}")
     print(f"Monte Carlo {option_type.capitalize()} Option Price: {monte_carlo_price:.2f}")
     # Calculate and print Greeks
-    delta, gamma, vega, theta, rho = black_scholes_greeks(S, X, T, r, sigma)
+    delta,gamma,vega,theta,rho= black_scholes_greeks(S, X, T, r, sigma)
     print("\nOption Greeks (Black-Scholes Model):")
     print(f"Delta:{delta:.4f}")
     print(f"Gamma:{gamma:.4f}")
@@ -111,7 +111,7 @@ def display_option_pricing(S,X,T,r,sigma,N,n_simulations,option_type="call",amer
     plt.ylabel('Option Price')
     plt.show()    
     #monte carlo distribution of stock prices at maturity
-    S_T = S * np.exp((r-0.5*sigma**2)*T+sigma*np.sqrt(T)*np.random.randn(n_simulations))
+    S_T=S*np.exp((r-0.5*sigma**2)*T+sigma*np.sqrt(T)*np.random.randn(n_simulations))
     plt.figure(figsize=(10,6))
     plt.hist(S_T,bins=50,color='purple',alpha=0.7)
     plt.title('Monte Carlo Simulation of Stock Prices at Maturity')
